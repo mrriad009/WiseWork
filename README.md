@@ -106,11 +106,42 @@ gantt
 | Phase | Milestone | Primary Deliverables | Status |
 | :--- | :--- | :--- | :--- |
 | **W1** | **Foundational UI** | Atomic Design System, Layout Scaffolding, Theme Config | 🟢 Complete |
-| **W2** | **AI Core** | Gemini/OpenAI Integration, Multi-format Parsers | 🟡 In Dev |
+| **W2** | **AI Core** | Gemini/OpenAI Integration, Multi-format Parsers | 🟢 Complete |
 | **W3** | **API Layer** | Secure File Handling, Real-time Processing Hooks | ⚪ Planned |
 | **W4** | **Data Synergy** | LinkedIn Profile Summarization, Resume Contextualization | ⚪ Planned |
 | **W5** | **AI Analytics** | Predictive Scoring Algorithm, Comparative Visuals | ⚪ Planned |
 | **W6** | **Optimization** | Performance Audits, API Rate Limiting, User Manuals | ⚪ Planned |
+
+---
+
+## 🚀 Getting Started
+
+WiseWork is now optimized for a single-command setup.
+
+### Prerequisites
+- **Node.js**: v18 or higher
+- **npm**: v9 or higher
+
+### 1. Initial Setup
+Run this command from the root folder to install all dependencies for both Frontend and Backend:
+```bash
+npm run install:all
+```
+
+### 2. Configure Environment
+A `.env` file has been created in the `server` folder. Open it and add your API keys:
+```env
+OPENAI_API_KEY=your_key
+GEMINI_API_KEY=your_key
+```
+
+### 3. Run the Application
+Start both the Frontend and Backend simultaneously with one command:
+```bash
+npm run dev
+```
+- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:5000](http://localhost:5000)
 
 ---
 
