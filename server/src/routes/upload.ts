@@ -20,7 +20,7 @@ router.post('/resume', upload.array('resumes', 5), async (req, res) => {
 
         const results = await Promise.all(
             files.length > 0 ?
-                files.map(async (file) => {
+                files.map(async (file: any) => {
                     try {
                         const text = await parseFile(file);
                         const analysis = await analyzeResume(text, linkedinUrl);

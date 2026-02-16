@@ -25,7 +25,7 @@ const run = async () => {
         });
 
         console.log("✨ Response:");
-        console.log(response.choices[0].message.content);
+        console.log(response.choices[0]?.message?.content || 'No response content');
     } catch (error) {
         console.error("❌ Error with ZAi:", error);
     }
