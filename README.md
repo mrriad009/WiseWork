@@ -107,9 +107,9 @@ gantt
 | :--- | :--- | :--- | :--- |
 | **W1** | **Foundational UI** | Atomic Design System, Layout Scaffolding, Theme Config | 🟢 Complete |
 | **W2** | **AI Core** | Gemini/OpenAI Integration, Multi-format Parsers | 🟢 Complete |
-| **W3** | **API Layer** | Secure File Handling, Real-time Processing Hooks | ⚪ Planned |
-| **W4** | **Data Synergy** | LinkedIn Profile Summarization, Resume Contextualization | ⚪ Planned |
-| **W5** | **AI Analytics** | Predictive Scoring Algorithm, Comparative Visuals | ⚪ Planned |
+| **W3** | **API Layer** | Secure File Handling, Real-time Processing Hooks | 🟢 Complete |
+| **W4** | **Data Synergy** | LinkedIn Profile Summarization, Resume Contextualization | 🟢 Complete |
+| **W5** | **AI Analytics** | Predictive Scoring Algorithm, Comparative Visuals | 🟢 Complete |
 | **W6** | **Optimization** | Performance Audits, API Rate Limiting, User Manuals | ⚪ Planned |
 
 ---
