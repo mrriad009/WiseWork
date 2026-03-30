@@ -1,268 +1,281 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
-  Upload, Link as LinkIcon, Brain, Search, Users, Shield, Sparkles,
-  ChevronRight, CheckCircle2, Zap, Award, MessageSquare, BarChart,
-  Globe, Lock, Monitor, ArrowRight, Play, Star, Quote, Menu, X
+  ArrowRight,
+  ChevronRight,
+  FileStack,
+  Layers,
+  Scale,
+  Sparkles,
+  Upload,
+  Zap,
 } from 'lucide-react'
-import ResumeAnalysis from './components/ResumeAnalysis';
+import ResumeAnalysis from './components/ResumeAnalysis'
+import { LandingHeroArt } from './components/LandingHeroArt'
+import { LandingDividerArt } from './components/LandingDividerArt'
+import { BrandMark, BrandWordmark, PageBackground } from './components/PageChrome'
 
 const App: React.FC = () => {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showApp, setShowApp] = useState(false)
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
   if (showApp) {
-    return <ResumeAnalysis onBack={() => setShowApp(false)} />;
+    return <ResumeAnalysis onBack={() => setShowApp(false)} />
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-violet-500/30">
-      {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-slate-900/90 backdrop-blur-md border-b border-white/10 py-4' : 'bg-transparent py-6'}`}>
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="p-1.5 bg-violet-600 rounded-lg">
-              <Brain className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">WISEWORK</span>
-          </div>
+    <div className="relative min-h-screen overflow-x-hidden text-stone-900 antialiased">
+      <PageBackground />
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            {['features', 'ecosystem', 'about'].map((item) => (
-              <a
-                key={item}
-                href={`#${item}`}
-                className="text-sm font-medium text-slate-400 hover:text-white transition-colors capitalize"
-              >
-                {item}
-              </a>
-            ))}
-            <button
-              onClick={() => setShowApp(true)}
-              className="bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
-            >
-              Launch App
-            </button>
-          </div>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to content
+      </a>
 
-          {/* Mobile Toggle */}
+      <header className="sticky top-0 z-50 border-b border-stone-200/80 bg-[#f6f5f1]/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 md:px-8">
+          <a href="#" className="flex items-center gap-3 transition opacity-100 hover:opacity-90">
+            <BrandMark />
+            <BrandWordmark subtitle />
+          </a>
+          <nav className="hidden items-center gap-8 text-sm font-medium text-stone-600 md:flex" aria-label="Primary">
+            <a href="#product" className="transition hover:text-stone-900">
+              Product
+            </a>
+            <a href="#workflow" className="transition hover:text-stone-900">
+              How it works
+            </a>
+            <a href="#cta" className="transition hover:text-stone-900">
+              Get started
+            </a>
+          </nav>
           <button
-            className="md:hidden p-2 text-white"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-950 pt-24 px-6 md:hidden">
-          <div className="flex flex-col gap-6 text-center">
-            {['features', 'ecosystem', 'about'].map((item) => (
-              <a
-                key={item}
-                href={`#${item}`}
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xl font-bold text-white capitalize py-4 border-b border-white/5"
-              >
-                {item}
-              </a>
-            ))}
-            <button
-              onClick={() => setShowApp(true)}
-              className="w-full py-4 rounded-xl bg-violet-600 text-white font-bold mt-4"
-            >
-              Launch App
-            </button>
-          </div>
-        </div>
-      )}
-
-      <main className="pt-32">
-        {/* --- Hero Section --- */}
-        <section className="max-w-7xl mx-auto px-6 lg:px-12 py-20 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-600/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-wider mb-8">
-            <Sparkles className="w-3.5 h-3.5" />
-            Next-Gen AI Recruitment
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-8 max-w-4xl mx-auto leading-tight">
-            The Future of Recruitment is <span className="text-violet-500">Artificial Intelligence.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-            WiseWork is an elite AI engine that parses, scores, and ranks candidates with 99.4% accuracy. Turn weeks of manual screening into seconds.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => setShowApp(true)}
-              className="bg-violet-600 hover:bg-violet-500 px-8 py-4 rounded-xl font-bold text-white transition-all flex items-center gap-2"
-            >
-              Start Analyzing Now
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button className="px-8 py-4 rounded-xl font-bold text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-              Watch Demo
-            </button>
-          </div>
-        </section>
-
-        {/* --- Stats Section --- */}
-        <section className="bg-white/[0.02] border-y border-white/5 py-16">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { label: 'Resumes Parsed', val: '2.5M+' },
-              { label: 'Time Saved', val: '94%' },
-              { label: 'Global Clients', val: '500+' },
-              { label: 'Accuracy Rate', val: '99.4%' }
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <p className="text-3xl md:text-4xl font-bold text-white mb-1">{stat.val}</p>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* --- Features Grid --- */}
-        <section id="features" className="max-w-7xl mx-auto px-6 lg:px-12 py-32">
-          <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Extreme Productivity.</h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              We've combined Gemini 1.5 Pro with custom recruitment heuristics to build a dashboard that delivers results.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<Zap className="w-6 h-6 text-violet-400" />}
-              title="Instant Batch Processing"
-              desc="Drop 500+ resumes and watch as our engine taxonomizes them in real-time."
-            />
-            <FeatureCard
-              icon={<Brain className="w-6 h-6 text-violet-400" />}
-              title="Conceptual Scoring"
-              desc="Go beyond keywords. Analyze candidate intent and potential with semantic search."
-            />
-            <FeatureCard
-              icon={<Monitor className="w-6 h-6 text-violet-400" />}
-              title="Live Previews"
-              desc="Interactive summaries that let you drill down into experiences without opening PDFs."
-            />
-            <FeatureCard
-              icon={<Globe className="w-6 h-6 text-violet-400" />}
-              title="LinkedIn Synergy"
-              desc="Automatically cross-reference resume data with live professional profiles."
-            />
-            <FeatureCard
-              icon={<Shield className="w-6 h-6 text-violet-400" />}
-              title="Zero Bias Algorithm"
-              desc="Tuned for diversity and inclusion, focusing purely on skill and contribution."
-            />
-            <FeatureCard
-              icon={<Award className="w-6 h-6 text-violet-400" />}
-              title="Predictive Path"
-              desc="AI forecasts where a candidate's career is headed based on historical data."
-            />
-          </div>
-        </section>
-
-        {/* --- Simple Testimonials --- */}
-        <section className="bg-white/[0.02] py-32 border-y border-white/5">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl md:text-5xl font-bold text-white text-center mb-20">Loved by Pioneers.</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <TestimonialCard
-                quote="WiseWork cut our screening time by 90%. We hired our last roles within days."
-                author="Sarah Chen"
-                role="Head of HR, Nebula"
-              />
-              <TestimonialCard
-                quote="The depth of skill extraction is unparalleled. It sees things we missed."
-                author="Marcus Wright"
-                role="Founder, HyperScale"
-              />
-              <TestimonialCard
-                quote="Finally a tool that actually understands engineering quality, not just buzzwords."
-                author="Elena Rossi"
-                role="CTO, Quantify"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* --- Final CTA --- */}
-        <section className="max-w-5xl mx-auto px-6 py-32 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-10 tracking-tight">Ready to Build Your Dream Team?</h2>
-          <button
+            type="button"
             onClick={() => setShowApp(true)}
-            className="bg-white text-slate-950 px-10 py-5 rounded-xl font-bold text-lg hover:bg-violet-500 hover:text-white transition-all"
+            className="group inline-flex shrink-0 items-center gap-1.5 rounded-full bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-stone-900/10 ring-1 ring-black/5 transition hover:bg-stone-800"
           >
-            Launch App Now
+            Open analyzer
+            <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
           </button>
+        </div>
+      </header>
+
+      <main id="main">
+        <section className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 md:px-8 md:pb-20 md:pt-14">
+          <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,420px)] lg:gap-12">
+            <div>
+              <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white/90 px-4 py-1.5 text-xs font-semibold text-stone-600 shadow-sm ring-1 ring-stone-200/60">
+                <Sparkles className="h-3.5 w-3.5 text-teal-600" aria-hidden />
+                AI ranking & hiring judgment
+              </p>
+              <h1 className="font-display text-[2.35rem] font-semibold leading-[1.08] tracking-tight text-stone-900 md:text-5xl lg:text-[3.25rem]">
+                Rank CVs with clarity —{' '}
+                <span className="text-teal-800">scores your team can trust.</span>
+              </h1>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-600 md:text-[1.125rem]">
+                Upload files or paste LinkedIn links. WiseWork returns ranked candidates, dimension scores, strengths,
+                risks, and a clear recommendation — so screening stays fast and explainable.
+              </p>
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => setShowApp(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-700 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-700/20 ring-1 ring-teal-800/10 transition hover:bg-teal-800"
+                >
+                  Start analyzing
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </button>
+                <p className="text-center text-sm text-stone-500 sm:text-left">
+                  Runs against your <span className="font-medium text-stone-700">local API</span> when the server is up.
+                </p>
+              </div>
+            </div>
+            <LandingHeroArt className="mx-auto w-full justify-items-center lg:mx-0 lg:justify-items-end" />
+          </div>
+
+          <ul className="mt-14 grid gap-3 sm:grid-cols-3" aria-label="Highlights">
+            {[
+              { icon: Layers, label: 'Multi-candidate batch', sub: 'Compare in one run' },
+              { icon: Scale, label: 'Explainable scores', sub: 'Bars + rationale' },
+              { icon: Zap, label: 'Sorted shortlist', sub: 'Highest fit first' },
+            ].map(({ icon: Icon, label, sub }) => (
+              <li
+                key={label}
+                className="flex items-center gap-3 rounded-2xl border border-stone-200/90 bg-white/90 px-4 py-3 shadow-sm ring-1 ring-stone-200/40"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-600/10 text-teal-800">
+                  <Icon className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">{label}</p>
+                  <p className="text-xs text-stone-500">{sub}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div className="relative w-full text-stone-100">
+          <LandingDividerArt className="h-12 w-full md:h-14" />
+        </div>
+
+        <section id="product" className="border-t border-stone-200/90 bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-xl">
+                <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">
+                  Everything in one place
+                </h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-stone-600 md:text-base">
+                  The analyzer mirrors this page: calm surfaces, strong hierarchy, and teal accents for actions and
+                  scores — built for long review sessions.
+                </p>
+              </div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Product</p>
+            </div>
+
+            <ul className="mt-12 grid gap-6 md:grid-cols-3 md:gap-8">
+              <li className="group relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-b from-white to-stone-50/80 p-7 shadow-sm ring-1 ring-stone-200/50 transition hover:shadow-md">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-900 text-white shadow-md shadow-stone-900/15">
+                  <FileStack className="h-6 w-6" strokeWidth={1.5} />
+                </span>
+                <h3 className="mt-6 font-display text-xl font-semibold text-stone-900">Batch comparison</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-stone-600">
+                  Add several candidates, each with a CV and optional LinkedIn URL. One run, one ordered list.
+                </p>
+              </li>
+              <li className="group relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-b from-white to-stone-50/80 p-7 shadow-sm ring-1 ring-stone-200/50 transition hover:shadow-md">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-700 text-white shadow-md shadow-teal-700/20">
+                  <Scale className="h-6 w-6" strokeWidth={1.5} />
+                </span>
+                <h3 className="mt-6 font-display text-xl font-semibold text-stone-900">Transparent judgment</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-stone-600">
+                  See hire / review / reject style signals, seniority, and a written justification — not a black box.
+                </p>
+              </li>
+              <li className="group relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-b from-white to-stone-50/80 p-7 shadow-sm ring-1 ring-stone-200/50 transition hover:shadow-md">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-900 ring-1 ring-stone-200">
+                  <Sparkles className="h-6 w-6" strokeWidth={1.5} />
+                </span>
+                <h3 className="mt-6 font-display text-xl font-semibold text-stone-900">Structured insight</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-stone-600">
+                  Technical and soft skills, strengths and gaps — formatted for handoff to hiring managers.
+                </p>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="workflow" className="border-t border-stone-200 bg-[#f0efea]/80">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">How it works</h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-stone-600">
+                Three steps from files to a ranked shortlist.
+              </p>
+            </div>
+            <ol className="relative mx-auto mt-14 grid max-w-4xl gap-8 md:grid-cols-3 md:gap-6">
+              <div
+                className="pointer-events-none absolute left-0 right-0 top-8 hidden h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent md:block"
+                aria-hidden
+              />
+              {[
+                { step: '1', title: 'Add candidates', desc: 'Name each person and attach a CV or LinkedIn URL.', icon: Upload },
+                { step: '2', title: 'Run analysis', desc: 'The server parses content and calls the AI model.', icon: Zap },
+                { step: '3', title: 'Review ranks', desc: 'Results sort by score with breakdowns and notes.', icon: Layers },
+              ].map(({ step, title, desc, icon: Icon }) => (
+                <li key={step} className="relative flex flex-col items-center text-center">
+                  <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200 bg-white text-teal-800 shadow-md ring-4 ring-[#f0efea]">
+                    <Icon className="h-6 w-6" strokeWidth={1.5} />
+                  </span>
+                  <span className="mt-4 font-display text-4xl font-semibold tabular-nums text-stone-200">{step}</span>
+                  <h3 className="mt-1 font-semibold text-stone-900">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-stone-600">{desc}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section id="cta" className="border-t border-stone-200 bg-gradient-to-b from-white to-[#f6f5f1] px-5 py-16 md:px-8 md:py-24">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative overflow-hidden rounded-3xl border border-teal-200/70 bg-white p-8 shadow-[0_24px_80px_-32px_rgba(15,118,110,0.35)] ring-1 ring-teal-100/90 md:p-12">
+              <div
+                className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-teal-400/25 blur-3xl"
+                aria-hidden
+              />
+              <div className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-amber-200/20 blur-3xl" aria-hidden />
+              <div className="relative flex flex-col items-start gap-8 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Ready</p>
+                  <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-stone-900 md:text-3xl">
+                    Open the analyzer
+                  </p>
+                  <p className="mt-2 max-w-md text-[15px] leading-relaxed text-stone-600">
+                    Same UI system as this site — optimized for focus and quick scanning.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowApp(true)}
+                  className="shrink-0 rounded-full bg-teal-700 px-10 py-4 text-sm font-semibold text-white shadow-lg shadow-teal-700/25 transition hover:bg-teal-800"
+                >
+                  Launch analyzer
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
 
-      {/* --- Footer --- */}
-      <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-violet-600 rounded-lg">
-              <Brain className="w-4 h-4 text-white" />
+      <footer className="border-t border-stone-200 bg-white">
+        <div className="mx-auto max-w-6xl px-5 py-12 md:px-8">
+          <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <BrandMark size="sm" />
+                <span className="font-semibold text-stone-900">WiseWork</span>
+              </div>
+              <p className="max-w-xs text-sm leading-relaxed text-stone-500">
+                AI-assisted screening. You stay accountable for hiring decisions.
+              </p>
             </div>
-            <span className="font-bold text-lg text-white">WISEWORK</span>
+            <div className="flex flex-wrap gap-10 text-sm">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Navigate</p>
+                <ul className="mt-3 space-y-2 text-stone-600">
+                  <li>
+                    <a href="#product" className="hover:text-teal-800">
+                      Product
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#workflow" className="hover:text-teal-800">
+                      How it works
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-400">App</p>
+                <ul className="mt-3 space-y-2 text-stone-600">
+                  <li>
+                    <button type="button" onClick={() => setShowApp(true)} className="text-left hover:text-teal-800">
+                      Analyzer
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-
-          <div className="flex gap-8 text-sm text-slate-500">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#ecosystem" className="hover:text-white transition-colors">Ecosystem</a>
-            <a href="#about" className="hover:text-white transition-colors">About</a>
-          </div>
-
-          <button
-            onClick={() => setShowApp(true)}
-            className="text-sm font-bold text-violet-400 hover:text-violet-300"
-          >
-            Launch App
-          </button>
-        </div>
-        <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-600">
-          <p>© 2026 WiseWork AI. All Rights Reserved.</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-white">Privacy</a>
-            <a href="#" className="hover:text-white">Terms</a>
-            <a href="#" className="hover:text-white">Cookies</a>
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-stone-100 pt-8 text-xs text-stone-400 md:flex-row">
+            <span>© {new Date().getFullYear()} WiseWork</span>
+            <span className="text-center md:text-right">Built for clear, fair hiring workflows.</span>
           </div>
         </div>
       </footer>
     </div>
   )
 }
-
-const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, desc: string }> = ({ icon, title, desc }) => (
-  <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-violet-500/30 transition-all">
-    <div className="mb-6 p-3 bg-slate-900 rounded-xl w-fit border border-white/10">
-      {icon}
-    </div>
-    <h3 className="text-xl font-bold mb-3 text-white">{title}</h3>
-    <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
-  </div>
-)
-
-const TestimonialCard: React.FC<{ quote: string, author: string, role: string }> = ({ quote, author, role }) => (
-  <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5">
-    <p className="text-lg text-slate-300 italic mb-6 leading-relaxed">"{quote}"</p>
-    <div>
-      <p className="font-bold text-white text-sm">{author}</p>
-      <p className="text-xs text-slate-500 uppercase font-medium">{role}</p>
-    </div>
-  </div>
-)
 
 export default App

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
-    Upload, FileText, Loader2, CheckCircle, AlertCircle, ArrowLeft,
-    Linkedin, Award, Briefcase, Zap, Star, Shield, Search, Plus, Trash2, User,
-    BarChart3, Target, HardHat, Coffee, Layers, Globe, Brain
+    Upload, Loader2, ArrowLeft, Plus, Trash2, User,
+    Search, Zap, Scale, Trophy, AlertTriangle, Sparkles, ChevronDown, TrendingUp
 } from 'lucide-react';
+import { BrandMark, BrandWordmark, PageBackground } from './PageChrome';
 
 interface CandidateEntry {
     id: string;
@@ -12,12 +12,44 @@ interface CandidateEntry {
     name: string;
 }
 
+type AnalysisResult = Record<string, unknown> & {
+    error?: string;
+    candidateName?: string;
+    fileName?: string;
+    score?: number;
+    executive_summary?: string;
+    recommendation?: { decision?: string; justification?: string };
+    detailed_scores?: Record<string, number>;
+    experience?: { seniority_level?: string };
+    skills?: { technical?: string[]; soft?: string[] };
+    strengths?: string[];
+    weaknesses?: string[];
+};
+
+const DIM_KEYS = ['technical_depth', 'leadership', 'domain_expertise', 'communication'] as const;
+const DIM_LABELS: Record<string, string> = {
+    technical_depth: 'Technical',
+    leadership: 'Leadership',
+    domain_expertise: 'Domain',
+    communication: 'Communication',
+};
+
+function labelForResult(r: AnalysisResult, rank: number) {
+    return (r.candidateName || r.fileName || `Candidate ${rank}`) as string;
+}
+
+function okResults(results: AnalysisResult[]) {
+    return results
+        .map((r, i) => ({ r, rank: i + 1 }))
+        .filter(({ r }) => !r.error && typeof r.score === 'number');
+}
+
 const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
     const [entries, setEntries] = useState<CandidateEntry[]>([
         { id: Math.random().toString(36).substr(2, 9), file: null, linkedinUrl: '', name: 'Candidate 1' }
     ]);
     const [analyzing, setAnalyzing] = useState(false);
-    const [results, setResults] = useState<any[]>([]);
+    const [results, setResults] = useState<AnalysisResult[]>([]);
     const [error, setError] = useState('');
 
     const addEntry = () => {
@@ -42,7 +74,7 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
     const handleUpload = async () => {
         const validEntries = entries.filter(e => e.file || e.linkedinUrl);
         if (validEntries.length === 0) {
-            setError('Please add at least one candidate with a CV or LinkedIn URL.');
+            setError('Add at least one CV file or LinkedIn URL.');
             return;
         }
 
@@ -64,13 +96,12 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
 
                 const data = await response.json();
                 if (response.ok) {
-                    return data.results[0];
+                    return data.results[0] as AnalysisResult;
                 } else {
-                    return { fileName: entry.file?.name || entry.name, error: data.error || 'Failed' };
+                    return { fileName: entry.file?.name || entry.name, error: data.error || 'Failed' } as AnalysisResult;
                 }
             }));
 
-            // Ranking Logic: Sort candidates by score descending
             const sortedResults = allResults.sort((a, b) => {
                 const scoreA = typeof a.score === 'number' ? a.score : 0;
                 const scoreB = typeof b.score === 'number' ? b.score : 0;
@@ -78,121 +109,184 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
             });
 
             setResults(sortedResults);
-        } catch (err) {
-            setError('Network error or server unavailable');
+        } catch {
+            setError('Could not reach the server. Try again.');
         } finally {
             setAnalyzing(false);
         }
     };
 
+    const comparable = okResults(results);
+    const multiCompare = comparable.length >= 2;
+
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 font-sans pb-20">
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 py-4 px-6">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="relative min-h-screen text-stone-900">
+            <PageBackground />
+
+            <header className="sticky top-0 z-50 border-b border-stone-200/90 bg-[#f6f5f1]/85 backdrop-blur-xl">
+                <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
                     <button
+                        type="button"
                         onClick={onBack}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-all text-sm font-bold"
+                        className="inline-flex items-center gap-2 rounded-full border border-stone-200/90 bg-white/90 px-3 py-1.5 text-sm font-medium text-stone-700 shadow-sm ring-1 ring-stone-200/50 transition hover:border-stone-300 hover:bg-white"
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Home
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
+                        <span className="hidden sm:inline">Back to site</span>
+                        <span className="sm:hidden">Back</span>
                     </button>
-                    <div className="flex items-center gap-2">
-                        <div className="p-1 bg-violet-600 rounded">
-                            <Brain className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="font-bold text-lg">WISEWORK</span>
+                    <div className="flex items-center gap-3">
+                        <BrandMark size="sm" />
+                        <BrandWordmark />
                     </div>
+                    <span className="w-[4.5rem] sm:w-28" aria-hidden />
                 </div>
-            </nav>
+            </header>
 
-            <main className="max-w-7xl mx-auto pt-32 px-6 grid lg:grid-cols-[350px_1fr] gap-12">
-                {/* Entry Manager Column */}
-                <div className="space-y-6">
-                    <div>
-                        <h1 className="text-3xl font-bold mb-2">Analysis Hub</h1>
-                        <p className="text-slate-500 text-sm">Batch process resumes for precision hiring.</p>
+            <main className="mx-auto max-w-7xl px-5 py-10 md:px-8 md:py-14">
+                <header className="mb-10 border-b border-stone-200/80 pb-8">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Analyzer</p>
+                    <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">
+                        Candidate review
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-stone-600">
+                        Results are sorted by overall score. With multiple candidates, use the comparison table to scan differences, then open each card for full detail.
+                    </p>
+                </header>
+
+                {error && (
+                    <div className="mb-8 rounded-2xl border border-red-200/90 bg-red-50 px-5 py-4 text-sm text-red-900 shadow-sm ring-1 ring-red-100" role="alert">
+                        {error}
                     </div>
+                )}
 
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                        <div className="space-y-4 mb-6">
-                            {entries.map((entry) => (
-                                <div key={entry.id} className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <input
-                                            className="bg-transparent border-none outline-none font-bold text-xs text-violet-400 w-full"
-                                            value={entry.name}
-                                            onChange={(e) => updateEntry(entry.id, { name: e.target.value })}
-                                        />
-                                        {entries.length > 1 && (
-                                            <button onClick={() => removeEntry(entry.id)} className="text-slate-600 hover:text-red-500">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
+                <div className="grid gap-10 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-12">
+                    <aside>
+                        <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-lg shadow-stone-900/[0.04] ring-1 ring-stone-200/60 lg:sticky lg:top-24">
+                            <h2 className="font-semibold text-stone-900">Candidates</h2>
+                            <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                                Each block is one applicant. At least one of CV file or LinkedIn URL is required.
+                            </p>
 
-                                    <div className="space-y-2">
-                                        <div className="relative rounded-lg bg-slate-950 border border-white/5 p-3 text-center cursor-pointer hover:border-violet-500/20">
+                            <div className="mt-6 space-y-4">
+                                {entries.map((entry) => (
+                                    <div
+                                        key={entry.id}
+                                        className="rounded-2xl border border-stone-100 bg-stone-50/90 p-4 ring-1 ring-stone-200/50"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
                                             <input
-                                                type="file"
-                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                                onChange={(e) => updateEntry(entry.id, { file: e.target.files?.[0] || null })}
+                                                className="min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold text-stone-900 outline-none placeholder:text-stone-400"
+                                                value={entry.name}
+                                                onChange={(e) => updateEntry(entry.id, { name: e.target.value })}
+                                                placeholder="Display name"
                                             />
-                                            <span className="text-xs font-bold text-slate-500 truncate block">
-                                                {entry.file ? entry.file.name : 'Choose Resume'}
-                                            </span>
+                                            {entries.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeEntry(entry.id)}
+                                                    className="shrink-0 rounded-lg p-2 text-stone-400 transition hover:bg-white hover:text-red-600"
+                                                    aria-label="Remove candidate"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </div>
-                                        <input
-                                            type="text"
-                                            placeholder="LinkedIn Profile URL"
-                                            value={entry.linkedinUrl}
-                                            onChange={(e) => updateEntry(entry.id, { linkedinUrl: e.target.value })}
-                                            className="w-full bg-slate-950 border border-white/5 rounded-lg px-3 py-2 text-xs font-medium outline-none border-transparent focus:border-violet-500/30"
-                                        />
+
+                                        <div className="mt-3 space-y-2">
+                                            <label className="relative flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl border border-dashed border-stone-300 bg-white px-3 py-2.5 text-center text-xs font-medium text-stone-600 transition hover:border-teal-400/50">
+                                                <input
+                                                    type="file"
+                                                    className="absolute inset-0 cursor-pointer opacity-0"
+                                                    onChange={(e) => updateEntry(entry.id, { file: e.target.files?.[0] || null })}
+                                                />
+                                                <Upload className="mr-2 h-4 w-4 shrink-0 opacity-50" aria-hidden />
+                                                <span className="truncate">{entry.file ? entry.file.name : 'Upload CV'}</span>
+                                            </label>
+                                            <input
+                                                type="url"
+                                                placeholder="LinkedIn URL (optional)"
+                                                value={entry.linkedinUrl}
+                                                onChange={(e) => updateEntry(entry.id, { linkedinUrl: e.target.value })}
+                                                className="w-full min-h-[44px] rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-xs text-stone-900 outline-none placeholder:text-stone-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+                                            />
+                                        </div>
                                     </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 space-y-2">
+                                <button
+                                    type="button"
+                                    onClick={addEntry}
+                                    className="flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white py-2.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-50"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Add candidate
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleUpload}
+                                    disabled={analyzing}
+                                    className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-md shadow-teal-700/20 transition hover:bg-teal-800 disabled:opacity-50"
+                                >
+                                    {analyzing ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Analyzing…
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Zap className="h-4 w-4" />
+                                            Run analysis
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <div className="min-h-[320px] custom-scrollbar lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-1">
+                        {analyzing && (
+                            <div className="flex flex-col items-center justify-center rounded-3xl border border-stone-200 bg-white py-24 shadow-sm">
+                                <div className="relative">
+                                    <div className="absolute inset-0 animate-ping rounded-full bg-teal-400/20" />
+                                    <Loader2 className="relative h-10 w-10 animate-spin text-teal-700" aria-hidden />
                                 </div>
-                            ))}
-                        </div>
+                                <p className="mt-6 text-sm font-semibold text-stone-700">Processing candidates…</p>
+                                <p className="mt-1 text-xs text-stone-500">This may take a moment per resume.</p>
+                            </div>
+                        )}
 
-                        <div className="space-y-3">
-                            <button
-                                onClick={addEntry}
-                                className="w-full py-3 border border-white/10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-                            >
-                                <Plus className="w-4 h-4" /> Add Candidate
-                            </button>
-                            <button
-                                onClick={handleUpload}
-                                disabled={analyzing}
-                                className="w-full py-4 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {analyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                                {analyzing ? 'Analyzing...' : 'Execute Analysis'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                        {!analyzing && results.length === 0 && (
+                            <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-stone-200/90 bg-white/70 py-20 text-center md:py-28">
+                                <div className="rounded-2xl bg-stone-100 p-4 text-stone-400">
+                                    <Search className="h-10 w-10" strokeWidth={1.25} aria-hidden />
+                                </div>
+                                <p className="mt-6 font-display text-lg font-semibold text-stone-800">No results yet</p>
+                                <p className="mt-2 max-w-sm text-sm leading-relaxed text-stone-500">
+                                    Add candidates on the left and run analysis. Ranked cards with scores will appear here.
+                                </p>
+                            </div>
+                        )}
 
-                {/* Results Column */}
-                <div className="space-y-8">
-                    {analyzing && (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-white/10">
-                            <Loader2 className="w-10 h-10 text-violet-500 animate-spin mb-4" />
-                            <p className="text-sm font-bold text-slate-400">Processing candidates...</p>
-                        </div>
-                    )}
-
-                    {!analyzing && results.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white/[0.02] border border-dashed border-white/10 rounded-3xl">
-                            <Search className="w-12 h-12 text-slate-700 mb-4" />
-                            <h3 className="text-xl font-bold text-slate-600 italic">No analysis results yet</h3>
-                            <p className="text-xs text-slate-700 mt-2">Upload resumes to see intelligence reports.</p>
-                        </div>
-                    )}
-
-                    <div className="space-y-6">
-                        {results.map((res, i) => (
-                            <ResultCard key={i} result={res} rank={i + 1} />
-                        ))}
+                        {!analyzing && results.length > 0 && (
+                            <div className="space-y-10">
+                                {multiCompare && (
+                                    <ComparisonSection results={results} comparable={comparable} />
+                                )}
+                                <div
+                                    className={
+                                        multiCompare
+                                            ? 'grid gap-8 sm:grid-cols-1 lg:grid-cols-2 lg:items-start'
+                                            : 'space-y-8'
+                                    }
+                                >
+                                    {results.map((res, i) => (
+                                        <ResultCard key={i} result={res} rank={i + 1} compactHeader={multiCompare} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
@@ -200,94 +294,334 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
     );
 };
 
-const ResultCard = ({ result, rank }: { result: any, rank: number }) => {
+/** Side-by-side leaderboard + dimension matrix for quick scanning */
+function ComparisonSection({
+    results,
+    comparable,
+}: {
+    results: AnalysisResult[];
+    comparable: { r: AnalysisResult; rank: number }[];
+}) {
+    const maxScore = Math.max(...comparable.map(({ r }) => (typeof r.score === 'number' ? r.score : 0)), 1);
+
+    return (
+        <section
+            className="overflow-hidden rounded-3xl border border-teal-200/80 bg-gradient-to-b from-teal-50/40 to-white shadow-md ring-1 ring-teal-100/60"
+            aria-labelledby="compare-heading"
+        >
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-100/80 bg-white/60 px-4 py-3 sm:px-5">
+                <div className="flex items-center gap-2">
+                    <Scale className="h-4 w-4 text-teal-700" aria-hidden />
+                    <h2 id="compare-heading" className="font-display text-base font-semibold text-stone-900">
+                        Compare at a glance
+                    </h2>
+                </div>
+                <p className="text-xs text-stone-500">Higher score ranks first · Same row = same metric</p>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                    <thead>
+                        <tr className="border-b border-stone-200 bg-stone-50/90">
+                            <th className="sticky left-0 z-10 bg-stone-50/95 px-3 py-3 pl-4 font-semibold text-stone-700 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.06)]">
+                                Rank
+                            </th>
+                            <th className="px-3 py-3 font-semibold text-stone-700">Candidate</th>
+                            <th className="px-3 py-3 font-semibold text-stone-700">Score</th>
+                            <th className="px-3 py-3 font-semibold text-stone-700">Call</th>
+                            {DIM_KEYS.map((k) => (
+                                <th key={k} className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-stone-500">
+                                    {DIM_LABELS[k] ?? k}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {comparable.map(({ r, rank }) => {
+                            const label = labelForResult(r, rank);
+                            const decision = r.recommendation?.decision ?? '—';
+                            const ds = r.detailed_scores || {};
+                            const isTop = rank === 1;
+                            return (
+                                <tr
+                                    key={rank + label}
+                                    className={`border-b border-stone-100 last:border-0 ${isTop ? 'bg-teal-50/50' : 'bg-white'}`}
+                                >
+                                    <td className="sticky left-0 z-10 whitespace-nowrap bg-inherit px-3 py-3 pl-4 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.04)]">
+                                        <span
+                                            className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
+                                                rank === 1
+                                                    ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-300/80'
+                                                    : rank === 2
+                                                      ? 'bg-stone-200 text-stone-800'
+                                                      : 'bg-stone-100 text-stone-600'
+                                            }`}
+                                        >
+                                            {rank}
+                                        </span>
+                                    </td>
+                                    <td className="max-w-[180px] px-3 py-3">
+                                        <span className="font-semibold text-stone-900">{label}</span>
+                                        {r.experience?.seniority_level && (
+                                            <span className="mt-0.5 block text-xs text-stone-500">{r.experience.seniority_level}</span>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-display text-xl font-bold tabular-nums text-teal-800">{r.score ?? '—'}</span>
+                                            <div className="h-2 w-16 overflow-hidden rounded-full bg-stone-200">
+                                                <div
+                                                    className="h-full rounded-full bg-teal-600"
+                                                    style={{
+                                                        width: `${Math.min(100, ((r.score as number) / maxScore) * 100)}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        <DecisionPill decision={decision} />
+                                    </td>
+                                    {DIM_KEYS.map((k) => {
+                                        const v = typeof ds[k] === 'number' ? ds[k] : null;
+                                        return (
+                                            <td key={k} className="px-2 py-2 align-middle">
+                                                {v != null ? (
+                                                    <div className="mx-auto max-w-[72px]">
+                                                        <div className="text-center text-xs font-semibold tabular-nums text-stone-800">
+                                                            {v}%
+                                                        </div>
+                                                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+                                                            <div
+                                                                className="h-full rounded-full bg-teal-500"
+                                                                style={{ width: `${Math.min(100, v)}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-center text-stone-400">—</span>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            {results.some((r) => r.error) && (
+                <p className="border-t border-amber-200/80 bg-amber-50/80 px-4 py-2 text-xs text-amber-900">
+                    Some rows failed analysis — see error cards below.
+                </p>
+            )}
+        </section>
+    );
+}
+
+function DecisionPill({ decision }: { decision: string }) {
+    const d = decision?.toLowerCase() || '';
+    const cls =
+        d === 'hire'
+            ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200'
+            : d === 'reject'
+              ? 'bg-red-100 text-red-900 ring-1 ring-red-200'
+              : 'bg-amber-100 text-amber-950 ring-1 ring-amber-200';
+    return (
+        <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{decision}</span>
+    );
+}
+
+const ResultCard = ({
+    result,
+    rank,
+    compactHeader,
+}: {
+    result: AnalysisResult;
+    rank: number;
+    compactHeader?: boolean;
+}) => {
+    const [expanded, setExpanded] = useState(true);
+
     if (result.error) {
         return (
-            <div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500 text-xs font-bold text-center">
-                Error analyzing {result.candidateName || result.fileName}: {result.error}
+            <div className="rounded-3xl border border-red-200 bg-red-50/90 px-6 py-5 text-sm text-red-900 shadow-sm ring-1 ring-red-100">
+                <span className="font-semibold">{result.candidateName || result.fileName}</span>
+                <span className="text-red-800"> — {result.error}</span>
             </div>
         );
     }
 
     const { recommendation, detailed_scores, experience, skills } = result;
+    const topRank = rank === 1;
+    const topStrength = result.strengths?.[0];
+    const topGap = result.weaknesses?.[0];
+    const summary = result.executive_summary;
 
     return (
-        <div className="bg-slate-900 border border-white/10 rounded-3xl p-8">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8 border-b border-white/5 pb-8">
-                <div className="flex gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-violet-600/20 flex items-center justify-center">
-                        <User className="w-8 h-8 text-violet-400" />
+        <article
+            id={`candidate-${rank}`}
+            className={`overflow-hidden rounded-3xl border bg-white shadow-lg shadow-stone-900/[0.04] ring-1 ${
+                topRank ? 'border-teal-200/90 ring-teal-100/80' : 'border-stone-200/90 ring-stone-200/50'
+            }`}
+        >
+            <div
+                className={`flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-start sm:justify-between ${
+                    topRank ? 'border-teal-100 bg-gradient-to-r from-teal-50/60 to-white' : 'border-stone-100 bg-stone-50/40'
+                }`}
+            >
+                <div className="flex min-w-0 flex-1 gap-3">
+                    <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                            topRank ? 'bg-teal-700 text-white' : 'bg-stone-200 text-stone-700'
+                        }`}
+                    >
+                        {topRank ? <Trophy className="h-6 w-6" strokeWidth={1.5} /> : <User className="h-6 w-6" strokeWidth={1.5} />}
                     </div>
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-display truncate text-lg font-semibold text-stone-900 sm:text-xl">
+                                {result.candidateName || result.fileName}
+                            </h3>
+                            <span
+                                className={`shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                    topRank ? 'bg-teal-700 text-white' : 'bg-stone-700 text-white'
+                                }`}
+                            >
+                                Rank {rank}
+                            </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            <DecisionPill decision={recommendation?.decision ?? '—'} />
+                            {experience?.seniority_level && (
+                                <span className="rounded-lg bg-white px-2.5 py-0.5 text-xs font-medium text-stone-700 ring-1 ring-stone-200">
+                                    {experience.seniority_level}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex shrink-0 items-start gap-4 sm:text-right">
                     <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <h3 className="text-3xl font-bold">{result.candidateName || result.fileName}</h3>
-                            <span className="bg-violet-600 text-white px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">
-                                Rank #{rank}
-                            </span>
+                        <div className="font-display text-4xl font-bold tabular-nums leading-none text-teal-800">
+                            {result.score ?? '—'}
                         </div>
-                        <div className="flex gap-2">
-                            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${recommendation.decision === 'Hire' ? 'bg-emerald-500/20 text-emerald-400' :
-                                recommendation.decision === 'Reject' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
-                                }`}>
-                                {recommendation.decision}
-                            </span>
-                            <span className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-bold text-slate-500 uppercase">
-                                {experience.seniority_level}
-                            </span>
-                        </div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-500">Overall</div>
                     </div>
-                </div>
-                <div className="text-center md:text-right">
-                    <div className="text-4xl font-bold text-violet-500">{result.score}</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Final Score</div>
+                    {compactHeader && (
+                        <button
+                            type="button"
+                            onClick={() => setExpanded((e) => !e)}
+                            className="rounded-lg p-1.5 text-stone-500 hover:bg-white hover:text-stone-800"
+                            aria-expanded={expanded}
+                            aria-label={expanded ? 'Collapse details' : 'Expand details'}
+                        >
+                            <ChevronDown className={`h-5 w-5 transition ${expanded ? 'rotate-180' : ''}`} />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-10">
-                <div className="space-y-6">
-                    <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Metrics</h4>
-                        <div className="space-y-3">
-                            {Object.entries(detailed_scores || {}).map(([key, value]) => (
-                                <div key={key}>
-                                    <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1">
-                                        <span>{key.replace('_', ' ')}</span>
-                                        <span>{value as number}%</span>
-                                    </div>
-                                    <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-violet-600" style={{ width: `${value}%` }} />
-                                    </div>
+            {/* Key points — always visible */}
+            <div className="space-y-3 border-b border-stone-100 bg-white px-5 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-teal-800">Main points</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                    {summary && (
+                        <div className="rounded-2xl border border-stone-100 bg-stone-50/80 p-3 sm:col-span-2">
+                            <div className="flex items-start gap-2">
+                                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" aria-hidden />
+                                <p className="text-sm leading-relaxed text-stone-700">
+                                    <span className="font-semibold text-stone-900">Summary · </span>
+                                    {summary}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                    {topStrength && (
+                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-800">
+                                <TrendingUp className="h-3.5 w-3.5 text-emerald-700" aria-hidden />
+                                Top strength
+                            </div>
+                            <p className="mt-1.5 text-sm font-medium leading-snug text-emerald-950">{topStrength}</p>
+                        </div>
+                    )}
+                    {topGap && (
+                        <div className="rounded-2xl border border-red-100 bg-red-50/40 p-3">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-red-800">
+                                <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                                Main gap / risk
+                            </div>
+                            <p className="mt-1.5 text-sm font-medium leading-snug text-red-950">{topGap}</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {expanded && (
+                <>
+                    <div className="grid gap-6 p-5 md:grid-cols-2 md:gap-8 md:p-6">
+                        <div className="space-y-5">
+                            <div>
+                                <h4 className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-500">Score breakdown</h4>
+                                <div className="mt-3 space-y-2.5">
+                                    {detailed_scores &&
+                                        Object.entries(detailed_scores).map(([key, value]) => (
+                                            <div key={key}>
+                                                <div className="mb-1 flex justify-between text-xs font-medium text-stone-600">
+                                                    <span className="capitalize">{String(key).replace(/_/g, ' ')}</span>
+                                                    <span className="tabular-nums text-stone-900">{value as number}%</span>
+                                                </div>
+                                                <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                                                    <div
+                                                        className="h-full rounded-full bg-gradient-to-r from-teal-600 to-teal-500"
+                                                        style={{ width: `${value}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                 </div>
-                            ))}
+                            </div>
+
+                            {recommendation?.justification && (
+                                <blockquote className="rounded-2xl border border-stone-100 bg-stone-50/90 p-4 text-sm leading-relaxed text-stone-700">
+                                    <span className="font-semibold text-stone-800">Why this call · </span>
+                                    {recommendation.justification}
+                                </blockquote>
+                            )}
+                        </div>
+
+                        <div className="space-y-5">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <SkillList title="Technical" items={skills?.technical ?? []} highlight />
+                                <SkillList title="Soft skills" items={skills?.soft ?? []} />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <BulletList title="All strengths" items={result.strengths ?? []} tone="positive" />
+                                <BulletList title="All gaps / risks" items={result.weaknesses ?? []} tone="negative" />
+                            </div>
                         </div>
                     </div>
-
-                    <div className="p-4 bg-white/5 rounded-xl">
-                        <p className="text-xs text-slate-400 leading-relaxed italic">"{recommendation.justification}"</p>
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <SkillList title="Technical" items={skills.technical} />
-                        <SkillList title="Soft Skills" items={skills.soft} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-6">
-                        <BulletList title="Strengths" items={result.strengths} color="text-emerald-400" />
-                        <BulletList title="Weaknesses" items={result.weaknesses} color="text-red-400" />
-                    </div>
-                </div>
-            </div>
-        </div>
+                </>
+            )}
+        </article>
     );
 };
 
-const SkillList = ({ title, items }: any) => (
-    <div className="space-y-3">
-        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{title}</h4>
-        <div className="flex flex-wrap gap-1.5">
-            {items?.slice(0, 8).map((item: string, idx: number) => (
-                <span key={idx} className="px-2 py-1 bg-slate-800 rounded text-[9px] font-medium text-slate-400">
+const SkillList = ({ title, items, highlight }: { title: string; items?: string[]; highlight?: boolean }) => (
+    <div>
+        <h4 className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-500">{title}</h4>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+            {items?.slice(0, 10).map((item, idx) => (
+                <span
+                    key={idx}
+                    className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${
+                        highlight && idx < 3
+                            ? 'border-teal-200 bg-teal-50 text-teal-900'
+                            : 'border-stone-200 bg-white text-stone-800'
+                    }`}
+                >
                     {item}
                 </span>
             ))}
@@ -295,14 +629,27 @@ const SkillList = ({ title, items }: any) => (
     </div>
 );
 
-const BulletList = ({ title, items, color }: any) => (
-    <div className="space-y-3">
-        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{title}</h4>
-        <ul className="space-y-1.5">
-            {items?.slice(0, 3).map((item: string, idx: number) => (
-                <li key={idx} className="text-xs text-slate-400 flex gap-2">
-                    <span className={`font-bold ${color}`}>•</span>
-                    {item}
+const BulletList = ({
+    title,
+    items,
+    tone,
+}: {
+    title: string;
+    items?: string[];
+    tone: 'positive' | 'negative';
+}) => (
+    <div>
+        <h4 className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-500">{title}</h4>
+        <ul className="mt-2 space-y-1.5">
+            {items?.map((item, idx) => (
+                <li key={idx} className="flex gap-2 text-sm leading-snug text-stone-700">
+                    <span
+                        className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${
+                            tone === 'positive' ? 'bg-emerald-500' : 'bg-red-400'
+                        }`}
+                        aria-hidden
+                    />
+                    <span>{item}</span>
                 </li>
             ))}
         </ul>
