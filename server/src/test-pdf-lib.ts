@@ -10,7 +10,7 @@ async function test() {
             const parser = new PDFParse({ data: Buffer.from('%PDF-1.4') });
             console.log('Instance created');
         } catch (e) {
-            console.log('Constructor failed:', e.message);
+            console.log('Constructor failed:', e instanceof Error ? e.message : e);
         }
     } catch (error) {
         console.error('Error:', error);
