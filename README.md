@@ -10,9 +10,9 @@
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-**Empowering Recruitment with Intelligent Automation and Deep Candidate Insights.**
+**Empowering recruitment with intelligent automation and explainable candidate insights.**
 
-[Overview](#-overview) • [Key Features](#-key-features) • [Tech Stack](#-tech-stack) • [Roadmap](#-6-week-timeline) • [Setup](#-getting-started)
+[Overview](#-overview) • [Key Features](#-key-features) • [Project structure](#-project-structure) • [Tech stack](#-tech-stack) • [API contract](#-api-contract) • [Setup](#-getting-started)
 
 </div>
 
@@ -20,7 +20,9 @@
 
 ## 📖 Overview
 
-**WiseWork** is a state-of-the-art AI-powered recruitment engine designed to eliminate the manual bottleneck of screening resumes. By leveraging advanced Large Language Models, WiseWork parses, analyzes, and ranks candidates with surgical precision, providing recruiters with actionable insights and a holistic view of every profile—including LinkedIn integration.
+**WiseWork** is an AI-assisted resume screening tool. The **client** is a React + Vite app with a marketing landing page and an **analyzer** flow: you add one or more candidates (CV upload and/or LinkedIn URL), run analysis against a **local backend**, and review ranked results with scores, strengths, risks, and recommendations.
+
+The **server** is a Node.js Express app that parses documents, optionally enriches with LinkedIn metadata, and calls **xAI (Grok)** via the OpenAI-compatible API (`XAI_API_KEY`, `XAI_BASE_URL`, `XAI_MODEL`).
 
 ---
 
@@ -28,11 +30,11 @@
 
 | Feature | Description |
 | :--- | :--- |
-| **🚀 Multi-CV Batch Processing** | Instantly upload and analyze dozens of resumes in parallel with high-speed parsing. |
-| **🎯 Intelligent Scoring** | Proprietary AI ranking (0-100) based on custom job descriptions or project requirements. |
-| **🔍 Deep Skill Extraction** | Automated identification of core competencies, gaps, and hidden potential. |
-| **🔗 LinkedIn Synergy** | Summarize professional trajectories and cross-reference CV data with live LinkedIn profiles. |
-| **💎 Premium UI/UX** | A sleek, dark-themed dashboard with glassmorphism components and fluid micro-animations. |
+| **Landing + analyzer** | Single-page flow: hero, product sections, then “Open analyzer” for `ResumeAnalysis`. |
+| **Multi-candidate batch** | Add several candidates; each request sends `multipart/form-data` with optional file, LinkedIn URL, and display name. |
+| **Explainable scoring** | UI expects dimension scores (e.g. technical depth, leadership), executive summary, strengths/weaknesses, and hire-style recommendation. |
+| **Editorial UI** | Light “paper” surfaces, stone neutrals, teal accents; **DM Sans** + **Fraunces** (see `client/src/index.css`). |
+| **Dev proxy** | Vite proxies `/api` to the backend so the client can call `/api/...` in development. |
 
 ---
 
@@ -40,111 +42,131 @@
 
 ```bash
 Ai/
-├── assets/             # Static assets (Banners, images)
-├── client/             # Frontend Application (React + Vite)
-│   ├── public/         # Public static files
-│   ├── src/            # Source code
-│   │   ├── components/ # Reusable UI components
-│   │   ├── App.tsx     # Main application entry
-│   │   └── main.tsx    # Bootstrapper
-│   └── index.html      # HTML Entry point
-├── server/             # Backend API (Node.js + Express)
-│   └── src/            # Server source code
-└── README.md           # Project Documentation
+├── assets/                    # Static assets (e.g. banner)
+├── client/                    # Frontend (React + Vite + Tailwind v4)
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── PageChrome.tsx       # Brand, background, layout chrome
+│   │   │   ├── LandingHeroArt.tsx
+│   │   │   ├── LandingDividerArt.tsx
+│   │   │   └── ResumeAnalysis.tsx   # Analyzer UI + fetch to /api/resume
+│   │   ├── App.tsx            # Landing ↔ analyzer toggle
+│   │   ├── main.tsx
+│   │   └── index.css          # Design tokens, Tailwind @theme
+│   ├── vite.config.ts         # port 3000, /api → localhost:5000
+│   └── package.json
+├── server/                    # Backend (Express + TypeScript)
+│   ├── src/
+│   │   └── …                  # Entry is expected at src/index.ts (see note below)
+│   ├── .env                   # Secrets — do not commit (see Setup)
+│   └── package.json
+├── package.json               # Root: install:all, dev (client + server)
+└── README.md
 ```
+
+**Backend entrypoint:** `server/package.json` runs `tsx watch src/index.ts`. If `server/src/index.ts` is missing in your tree, restore it from version control; otherwise `npm run dev` in `server` will fail. A small `test-pdf-lib.ts` helper may exist for PDF library checks only.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Framework**: `React 18` + `TypeScript`
-- **Build Tool**: `Vite`
-- **Styling**: `Tailwind CSS v4` (Glassmorphism Design System)
-- **Animations**: `Framer Motion`
+### Frontend (`client/package.json`)
 
-### Backend
-- **Runtime**: `Node.js` + `TypeScript`
-- **Server**: `Express.js`
-- **AI Logic**: `OpenAI API` / `Google Gemini API`
-- **File Parsing**: `pdf-parse`
+- **React** 19 + **TypeScript**
+- **Vite** 7
+- **Tailwind CSS** v4 via `@tailwindcss/vite`
+- **Framer Motion**, **lucide-react**
+
+### Backend (`server/package.json`)
+
+- **Node.js** (ESM), **Express** 5, **TypeScript** + **tsx**
+- **AI:** `openai` (OpenAI SDK pointed at xAI’s base URL)
+- **Parsing / web:** `pdf-parse`, `mammoth`, `cheerio`, `axios`
+- **Uploads:** `multer`, `cors`, `dotenv`
 
 ---
 
-## 📅 6-Week Implementation Roadmap
+## 🔌 API Contract
 
-> [!NOTE]
-> This roadmap outlines the strategic rollout of WiseWork's core features. Each phase is designed to build upon the previous, ensuring a stable and data-driven recruitment platform.
+The analyzer (`ResumeAnalysis.tsx`) calls:
 
-```mermaid
-gantt
-    title WiseWork Development Cycle
-    dateFormat  YYYY-MM-DD
-    axisFormat  Week %W
-    
-    section Phase 1: Foundation
-    UI Design System & Scaffolding :active, w1, 2026-02-01, 7d
-    
-    section Phase 2: Core Engine
-    LLM Integration & PDF Parsing  :w2, after w1, 7d
-    
-    section Phase 3: Middleware
-    File Upload & API Architecture :w3, after w2, 7d
-    
-    section Phase 4: Intelligence
-    LinkedIn Scraper & Analysis    :w4, after w3, 7d
-    
-    section Phase 5: Synthesis
-    Ranking Logic & Final Dashboard :w5, after w4, 7d
-    
-    section Phase 6: Delivery
-    QA, Tuning & Documentation     :w6, after w5, 7d
-```
+- **Method:** `POST`
+- **Path:** `/api/resume` (resolved via Vite proxy to `http://localhost:5000` in dev)
+- **Body:** `multipart/form-data` with:
+  - `resumes` — file (optional if LinkedIn URL is used)
+  - `linkedinUrl` — string
+  - `candidateName` — string
 
-### 🎯 Milestone Breakdown
-
-| Phase | Milestone | Primary Deliverables | Status |
-| :--- | :--- | :--- | :--- |
-| **W1** | **Foundational UI** | Atomic Design System, Layout Scaffolding, Theme Config | 🟢 Complete |
-| **W2** | **AI Core** | Gemini/OpenAI Integration, Multi-format Parsers | 🟢 Complete |
-| **W3** | **API Layer** | Secure File Handling, Real-time Processing Hooks | 🟢 Complete |
-| **W4** | **Data Synergy** | LinkedIn Profile Summarization, Resume Contextualization | 🟢 Complete |
-| **W5** | **AI Analytics** | Predictive Scoring Algorithm, Comparative Visuals | 🟢 Complete |
-| **W6** | **Optimization** | Performance Audits, API Rate Limiting, User Manuals | ⚪ Planned |
+**Success:** JSON with a `results` array; the client uses the first element per candidate. Shape includes fields such as `score`, `executive_summary`, `recommendation`, `detailed_scores`, `experience`, `skills`, `strengths`, `weaknesses`, and optional `error` for failures.
 
 ---
 
 ## 🚀 Getting Started
 
-WiseWork is now optimized for a single-command setup.
-
 ### Prerequisites
-- **Node.js**: v18 or higher
-- **npm**: v9 or higher
 
-### 1. Initial Setup
-Run this command from the root folder to install all dependencies for both Frontend and Backend:
+- **Node.js** v18 or higher  
+- **npm** v9 or higher  
+
+### 1. Install dependencies
+
+From the repository root:
+
 ```bash
 npm run install:all
 ```
 
-### 2. Configure Environment
-A `.env` file has been created in the `server` folder. Open it and add your API keys:
-```env
-OPENAI_API_KEY=your_key
-GEMINI_API_KEY=your_key
-```
+### 2. Configure the server
 
-### 3. Run the Application
-Start both the Frontend and Backend simultaneously with one command:
+Copy or edit `server/.env`. Typical variables (names only — use your own secrets):
+
+- `PORT` — API port (default **5000**; must match Vite proxy target)
+- **xAI:** `XAI_API_KEY` (required), optional `XAI_BASE_URL` (default `https://api.x.ai/v1`), `XAI_MODEL` (e.g. `grok-3-mini`)
+
+Never commit real keys or credential JSON files.
+
+### 3. Run the app
+
 ```bash
 npm run dev
 ```
-- **Frontend**: [http://localhost:5173](http://localhost:5173)
-- **Backend API**: [http://localhost:5000](http://localhost:5000)
+
+- **Frontend:** [http://localhost:3000](http://localhost:3000) (configured in `client/vite.config.ts`)
+- **Backend:** [http://localhost:5000](http://localhost:5000) when `server/src/index.ts` is present and `npm run dev` for the server succeeds
+
+Individual packages:
+
+```bash
+npm run client   # Vite only
+npm run server   # API only
+```
+
+### 4. Production build (client)
+
+```bash
+npm run build --prefix client
+```
+
+Static output is under `client/dist/` (served or deployed as you prefer; API must be reachable for analyzer calls).
+
+---
+
+## 📅 Roadmap (reference)
+
+Earlier planning used a phased rollout (UI → AI → API → LinkedIn → analytics → polish). Treat the table below as **historical / planning**; implementation status should be verified against the repo and your deployed backend.
+
+| Phase | Focus |
+| :--- | :--- |
+| Foundation | Design system, layout, landing |
+| Core | LLM integration, PDF/DOC parsing |
+| API | Upload routes, error handling |
+| Data | LinkedIn enrichment (if implemented) |
+| Analytics | Ranking, comparative UI |
+| Delivery | QA, limits, docs |
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ for Excellence in AI Recruitment.</sub>
+  <sub>Built with care for clear, explainable hiring workflows.</sub>
 </div>

@@ -1,7 +1,68 @@
 @import "tailwindcss";
 
+/* WiseWork — design tokens */
+:root {
+  --ww-paper: #f6f5f1;
+  --ww-surface: #ffffff;
+  --ww-ink: #1c1917;
+  --ww-muted: #57534e;
+  --ww-border: #e7e5e4;
+  --ww-accent: #0f766e;
+  --ww-accent-mid: #0d9488;
+  --ww-accent-soft: rgba(15, 118, 110, 0.09);
+  --ww-warm: #faf8f5;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-feature-settings: "kern" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+@theme {
+  --animate-landing-shimmer: landing-shimmer 8s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.7s ease-out forwards;
+}
+
+@keyframes landing-shimmer {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.font-display {
+  font-family: "Fraunces", "Georgia", serif;
+  font-optical-sizing: auto;
+}
+
+/* Dot grid — editorial / product hybrid (use with fixed inset layer) */
+.bg-ww-dots {
+  background-color: var(--ww-paper);
+  background-image: radial-gradient(rgba(28, 25, 23, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--ww-paper);
+  color: var(--ww-ink);
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 7px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -9,19 +70,20 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: #d6d3d1;
+  border-radius: 999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+  background: #a8a29e;
 }
 
-:root {
-  font-family: 'Inter', sans-serif;
+/* Focus ring — accessible, on-brand */
+:focus-visible {
+  outline: 2px solid var(--ww-accent-mid);
+  outline-offset: 2px;
 }
 
-body {
-  margin: 0;
-  padding: 0;
+button:focus:not(:focus-visible) {
+  outline: none;
 }

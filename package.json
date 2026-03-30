@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "install:all": "npm install && npm install --prefix client && npm install --prefix server",
-        "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+        "dev": "node ./node_modules/concurrently/dist/bin/concurrently.js \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
         "client": "npm run dev --prefix client",
         "server": "npm run dev --prefix server"
     },
