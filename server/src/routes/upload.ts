@@ -4,6 +4,7 @@ import fs from "fs";
 import { parseFile } from "../services/fileParser.js";
 import { analyzeResume } from "../services/aiAnalyzer.js";
 import { scrapeLinkedIn } from "../services/linkedinScraper.js";
+import { saveAnalysisRun } from "../services/analysisStore.js";
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -53,6 +54,20 @@ router.post("/resume", upload.array("resumes", 5), async (req, res) => {
             })(),
           ],
     );
+
+    for (const row of results) {
+      const err =
+        row && typeof row === "object" && "error" in row && row.error != null
+          ? String(row.error)
+          : null;
+      await saveAnalysisRun({
+        candidateName: typeof row.candidateName === "string" ? row.candidateName : candidateName,
+        linkedinUrl,
+        fileName: typeof row.fileName === "string" ? row.fileName : undefined,
+        result: err ? null : { ...(row as Record<string, unknown>) },
+        error: err,
+      });
+    }
 
     res.json({ results });
   } catch (error) {

@@ -22,7 +22,7 @@
 
 **WiseWork** is an AI-assisted resume screening tool. The **client** is a React + Vite app with a marketing landing page and an **analyzer** flow: you add one or more candidates (CV upload and/or LinkedIn URL), run analysis against a **local backend**, and review ranked results with scores, strengths, risks, and recommendations.
 
-The **server** is a Node.js Express app that parses documents, optionally enriches with LinkedIn metadata, and calls **xAI (Grok)** via the OpenAI-compatible API (`XAI_API_KEY`, `XAI_BASE_URL`, `XAI_MODEL`).
+The **server** is a Node.js Express app that parses documents, optionally enriches with LinkedIn metadata, calls **xAI (Grok)** via the OpenAI-compatible API (`XAI_API_KEY`, `XAI_BASE_URL`, `XAI_MODEL`), and can persist each analysis run to **[Neon](https://neon.tech)** (PostgreSQL) when `DATABASE_URL` is set.
 
 ---
 
@@ -57,8 +57,12 @@ Ai/
 │   ├── vite.config.ts         # port 3000, /api → localhost:5000
 │   └── package.json
 ├── server/                    # Backend (Express + TypeScript)
+│   ├── db/
+│   │   └── schema.sql         # Neon: run once in SQL Editor
 │   ├── src/
-│   │   └── …                  # Entry is expected at src/index.ts (see note below)
+│   │   ├── db/client.ts      # Neon serverless driver
+│   │   ├── services/analysisStore.ts
+│   │   └── …
 │   ├── .env                   # Secrets — do not commit (see Setup)
 │   └── package.json
 ├── package.json               # Root: install:all, dev (client + server)
@@ -82,6 +86,7 @@ Ai/
 
 - **Node.js** (ESM), **Express** 5, **TypeScript** + **tsx**
 - **AI:** `openai` (OpenAI SDK pointed at xAI’s base URL)
+- **Database (optional):** `@neondatabase/serverless` + `DATABASE_URL` (Neon PostgreSQL)
 - **Parsing / web:** `pdf-parse`, `mammoth`, `cheerio`, `axios`
 - **Uploads:** `multer`, `cors`, `dotenv`
 
@@ -99,6 +104,11 @@ The analyzer (`ResumeAnalysis.tsx`) calls:
   - `candidateName` — string
 
 **Success:** JSON with a `results` array; the client uses the first element per candidate. Shape includes fields such as `score`, `executive_summary`, `recommendation`, `detailed_scores`, `experience`, `skills`, `strengths`, `weaknesses`, and optional `error` for failures.
+
+**Persisted runs (Neon):** Each successful or failed candidate row is inserted into `analysis_runs` when `DATABASE_URL` is configured.
+
+- **Method:** `GET`
+- **Path:** `/api/analyses?limit=50` — `{ runs, databaseConfigured }`. If Neon is not configured, `runs` is `[]` and `databaseConfigured` is `false`.
 
 ---
 
@@ -123,6 +133,7 @@ Copy or edit `server/.env`. Typical variables (names only — use your own secre
 
 - `PORT` — API port (default **5000**; must match Vite proxy target)
 - **xAI:** `XAI_API_KEY` (required), optional `XAI_BASE_URL` (default `https://api.x.ai/v1`), `XAI_MODEL` (e.g. `grok-3-mini`)
+- **Neon (optional):** `DATABASE_URL` — Postgres connection string from the [Neon dashboard](https://console.neon.tech) (use the **pooled** string if offered). Create tables with **`cd server && npm run db:push`** (or run `server/db/schema.sql` manually in the Neon SQL Editor).
 
 Never commit real keys or credential JSON files.
 

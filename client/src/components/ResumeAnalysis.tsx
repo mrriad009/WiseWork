@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Upload, Loader2, ArrowLeft, Plus, Trash2, User,
-    Search, Zap, Scale, Trophy, AlertTriangle, Sparkles, ChevronDown, TrendingUp
+    Search, Zap, Scale, Trophy, AlertTriangle, Sparkles, ChevronDown, TrendingUp, LayoutList,
 } from 'lucide-react';
 import { BrandMark, BrandWordmark, PageBackground } from './PageChrome';
 
@@ -14,7 +14,10 @@ interface CandidateEntry {
 
 type AnalysisResult = Record<string, unknown> & {
     error?: string;
+    /** From form (e.g. "Candidate 1") — fallback only */
     candidateName?: string;
+    /** Full name parsed from CV / profile by the model */
+    cv_candidate_name?: string;
     fileName?: string;
     score?: number;
     executive_summary?: string;
@@ -26,6 +29,16 @@ type AnalysisResult = Record<string, unknown> & {
     weaknesses?: string[];
 };
 
+type SavedAnalysisRun = {
+    id: string;
+    created_at: string;
+    candidate_name: string | null;
+    linkedin_url: string | null;
+    file_name: string | null;
+    result: AnalysisResult | null;
+    error: string | null;
+};
+
 const DIM_KEYS = ['technical_depth', 'leadership', 'domain_expertise', 'communication'] as const;
 const DIM_LABELS: Record<string, string> = {
     technical_depth: 'Technical',
@@ -34,8 +47,21 @@ const DIM_LABELS: Record<string, string> = {
     communication: 'Communication',
 };
 
-function labelForResult(r: AnalysisResult, rank: number) {
+/** Prefer name from parsed CV; then form label; then file; then generic. */
+function displayNameForResult(r: AnalysisResult, rank: number) {
+    const fromCv = typeof r.cv_candidate_name === 'string' ? r.cv_candidate_name.trim() : '';
+    if (fromCv) return fromCv;
     return (r.candidateName || r.fileName || `Candidate ${rank}`) as string;
+}
+
+function displayNameForSavedRun(run: SavedAnalysisRun) {
+    const res = run.result;
+    if (res && typeof res.cv_candidate_name === 'string' && res.cv_candidate_name.trim()) {
+        return res.cv_candidate_name.trim();
+    }
+    if (run.candidate_name?.trim()) return run.candidate_name.trim();
+    if (run.file_name?.trim()) return run.file_name.trim();
+    return 'Unknown candidate';
 }
 
 function okResults(results: AnalysisResult[]) {
@@ -45,12 +71,46 @@ function okResults(results: AnalysisResult[]) {
 }
 
 const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
+    const [mainTab, setMainTab] = useState<'review' | 'saved'>('review');
+    const [savedRuns, setSavedRuns] = useState<SavedAnalysisRun[]>([]);
+    const [savedLoading, setSavedLoading] = useState(false);
+    const [savedError, setSavedError] = useState('');
+    const [dbConfigured, setDbConfigured] = useState<boolean | null>(null);
+
     const [entries, setEntries] = useState<CandidateEntry[]>([
         { id: Math.random().toString(36).substr(2, 9), file: null, linkedinUrl: '', name: 'Candidate 1' }
     ]);
     const [analyzing, setAnalyzing] = useState(false);
     const [results, setResults] = useState<AnalysisResult[]>([]);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (mainTab !== 'saved') return;
+        let cancelled = false;
+        (async () => {
+            setSavedLoading(true);
+            setSavedError('');
+            try {
+                const r = await fetch('/api/analyses?limit=100');
+                const data = (await r.json()) as {
+                    runs?: SavedAnalysisRun[];
+                    databaseConfigured?: boolean;
+                    error?: string;
+                };
+                if (cancelled) return;
+                setDbConfigured(data.databaseConfigured ?? false);
+                if (data.runs) setSavedRuns(data.runs);
+                if (!r.ok && data.error) setSavedError(data.error);
+            } catch {
+                if (!cancelled) setSavedError('Could not load saved candidates.');
+            } finally {
+                if (!cancelled) setSavedLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [mainTab]);
 
     const addEntry = () => {
         setEntries([...entries, {
@@ -143,14 +203,42 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
             </header>
 
             <main className="mx-auto max-w-7xl px-5 py-10 md:px-8 md:py-14">
-                <header className="mb-10 border-b border-stone-200/80 pb-8">
+                <header className="mb-8 border-b border-stone-200/80 pb-6">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Analyzer</p>
                     <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">
                         Candidate review
                     </h1>
                     <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-stone-600">
-                        Results are sorted by overall score. With multiple candidates, use the comparison table to scan differences, then open each card for full detail.
+                        {mainTab === 'review'
+                            ? 'Results use names parsed from each CV when available. Compare scores side by side, then open a card for full detail.'
+                            : 'All analysis runs stored in your database (Neon), newest first.'}
                     </p>
+                    <div className="mt-6 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setMainTab('review')}
+                            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                mainTab === 'review'
+                                    ? 'bg-stone-900 text-white shadow-md shadow-stone-900/15'
+                                    : 'border border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                            }`}
+                        >
+                            <Zap className="h-4 w-4" aria-hidden />
+                            Current analysis
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMainTab('saved')}
+                            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                mainTab === 'saved'
+                                    ? 'bg-stone-900 text-white shadow-md shadow-stone-900/15'
+                                    : 'border border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                            }`}
+                        >
+                            <LayoutList className="h-4 w-4" aria-hidden />
+                            Candidate list
+                        </button>
+                    </div>
                 </header>
 
                 {error && (
@@ -159,6 +247,16 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
                     </div>
                 )}
 
+                {mainTab === 'saved' && (
+                    <SavedCandidatesPanel
+                        runs={savedRuns}
+                        loading={savedLoading}
+                        error={savedError}
+                        dbConfigured={dbConfigured}
+                    />
+                )}
+
+                {mainTab === 'review' && (
                 <div className="grid gap-10 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-12">
                     <aside>
                         <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-lg shadow-stone-900/[0.04] ring-1 ring-stone-200/60 lg:sticky lg:top-24">
@@ -289,6 +387,7 @@ const ResumeAnalysis = ({ onBack }: { onBack: () => void }) => {
                         )}
                     </div>
                 </div>
+                )}
             </main>
         </div>
     );
@@ -338,7 +437,7 @@ function ComparisonSection({
                     </thead>
                     <tbody>
                         {comparable.map(({ r, rank }) => {
-                            const label = labelForResult(r, rank);
+                            const label = displayNameForResult(r, rank);
                             const decision = r.recommendation?.decision ?? '—';
                             const ds = r.detailed_scores || {};
                             const isTop = rank === 1;
@@ -433,6 +532,114 @@ function DecisionPill({ decision }: { decision: string }) {
     );
 }
 
+function SavedCandidatesPanel({
+    runs,
+    loading,
+    error,
+    dbConfigured,
+}: {
+    runs: SavedAnalysisRun[];
+    loading: boolean;
+    error: string;
+    dbConfigured: boolean | null;
+}) {
+    if (dbConfigured === false) {
+        return (
+            <div className="rounded-3xl border border-amber-200/80 bg-amber-50/90 px-6 py-10 text-center shadow-sm ring-1 ring-amber-100/80">
+                <p className="font-display text-lg font-semibold text-amber-950">Database not connected</p>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-amber-900/90">
+                    Add your Neon connection string as{' '}
+                    <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs text-amber-950">DATABASE_URL</code> in{' '}
+                    <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs">server/.env</code>, run{' '}
+                    <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs">npm run db:push</code> in the server folder, then restart the API.
+                    Saved analyses will show here automatically.
+                </p>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-stone-200 bg-white py-24">
+                <Loader2 className="h-10 w-10 animate-spin text-teal-700" aria-hidden />
+                <p className="mt-4 text-sm font-medium text-stone-600">Loading saved candidates…</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-900" role="alert">
+                {error}
+            </div>
+        );
+    }
+
+    if (runs.length === 0) {
+        return (
+            <div className="rounded-3xl border-2 border-dashed border-stone-200/90 bg-white/80 py-16 text-center md:py-20">
+                <LayoutList className="mx-auto h-10 w-10 text-stone-300" strokeWidth={1.25} aria-hidden />
+                <p className="mt-6 font-display text-lg font-semibold text-stone-800">No saved candidates yet</p>
+                <p className="mt-2 text-sm text-stone-500">
+                    Run an analysis on the &quot;Current analysis&quot; tab — each completed run is stored when Neon is configured.
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="overflow-x-auto rounded-3xl border border-stone-200 bg-white shadow-md shadow-stone-900/[0.04] ring-1 ring-stone-200/60">
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                <thead>
+                    <tr className="border-b border-stone-200 bg-stone-50/95">
+                        <th className="px-4 py-3.5 font-semibold text-stone-800">Candidate</th>
+                        <th className="px-4 py-3.5 font-semibold text-stone-800">Score</th>
+                        <th className="px-4 py-3.5 font-semibold text-stone-800">Call</th>
+                        <th className="whitespace-nowrap px-4 py-3.5 font-semibold text-stone-800">Saved</th>
+                        <th className="min-w-[240px] px-4 py-3.5 font-semibold text-stone-800">Summary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {runs.map((run) => {
+                        const name = displayNameForSavedRun(run);
+                        const res = run.result;
+                        const score = res && typeof res.score === 'number' ? res.score : null;
+                        const decision = run.error ? 'Error' : (res?.recommendation?.decision ?? '—');
+                        const summary =
+                            run.error ||
+                            (typeof res?.executive_summary === 'string' ? res.executive_summary : null) ||
+                            '—';
+                        return (
+                            <tr key={run.id} className="border-b border-stone-100 align-top last:border-0">
+                                <td className="px-4 py-3.5">
+                                    <span className="font-semibold text-stone-900">{name}</span>
+                                    {run.file_name && (
+                                        <span className="mt-0.5 block truncate text-xs text-stone-500" title={run.file_name}>
+                                            {run.file_name}
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3.5 font-display text-lg font-bold tabular-nums text-teal-800">
+                                    {score ?? '—'}
+                                </td>
+                                <td className="px-4 py-3.5">
+                                    <DecisionPill decision={decision} />
+                                </td>
+                                <td className="whitespace-nowrap px-4 py-3.5 text-xs text-stone-500">
+                                    {new Date(run.created_at).toLocaleString()}
+                                </td>
+                                <td className="max-w-md px-4 py-3.5 text-xs leading-relaxed text-stone-600">
+                                    {summary.length > 220 ? `${summary.slice(0, 220)}…` : summary}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
 const ResultCard = ({
     result,
     rank,
@@ -447,7 +654,7 @@ const ResultCard = ({
     if (result.error) {
         return (
             <div className="rounded-3xl border border-red-200 bg-red-50/90 px-6 py-5 text-sm text-red-900 shadow-sm ring-1 ring-red-100">
-                <span className="font-semibold">{result.candidateName || result.fileName}</span>
+                <span className="font-semibold">{displayNameForResult(result, rank)}</span>
                 <span className="text-red-800"> — {result.error}</span>
             </div>
         );
@@ -482,7 +689,7 @@ const ResultCard = ({
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-display truncate text-lg font-semibold text-stone-900 sm:text-xl">
-                                {result.candidateName || result.fileName}
+                                {displayNameForResult(result, rank)}
                             </h3>
                             <span
                                 className={`shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${

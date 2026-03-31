@@ -1,20 +1,29 @@
 import OpenAI from "openai";
-import dotenv from "dotenv";
 
-dotenv.config();
+const baseURL = (process.env.XAI_BASE_URL ?? "https://api.x.ai/v1").trim();
+const model = (process.env.XAI_MODEL ?? "grok-3-mini").trim();
 
-const apiKey = process.env.XAI_API_KEY;
-const baseURL = process.env.XAI_BASE_URL ?? "https://api.x.ai/v1";
-const model = process.env.XAI_MODEL ?? "grok-3-mini";
-
-if (!apiKey) {
-  console.error("❌ XAI_API_KEY is missing in .env file.");
+function xaiApiKey(): string {
+  const key = process.env.XAI_API_KEY?.trim();
+  if (!key) {
+    throw new Error(
+      "XAI_API_KEY is missing. Set it in server/.env (see .env.example). Do not pass an empty key — the OpenAI client would fall back to OPENAI_API_KEY.",
+    );
+  }
+  return key;
 }
 
-const client = new OpenAI({
-  apiKey: apiKey ?? "",
-  baseURL,
-});
+let client: OpenAI | null = null;
+
+function getClient(): OpenAI {
+  if (!client) {
+    client = new OpenAI({
+      apiKey: xaiApiKey(),
+      baseURL,
+    });
+  }
+  return client;
+}
 
 export const analyzeResume = async (resumeText: string, linkedinUrl?: string) => {
   if (!resumeText) {
@@ -35,11 +44,13 @@ export const analyzeResume = async (resumeText: string, linkedinUrl?: string) =>
 
     OUTPUT REQUIREMENTS:
     - CATEGORIZE skills strictly (Technical, Soft, Tools).
+    - Extract cv_candidate_name: the candidate's FULL NAME exactly as shown on the CV or LinkedIn header (e.g. top of resume). If truly not present, use an empty string "".
     - Provide an EXECUTIVE SUMMARY (30-50 words) that describes the candidate's actual professional identity.
     - DECISION logic must be based on the depth of evidence found in the text.
 
     Respond with ONLY a single JSON object (no markdown fences, no extra text). Use this exact shape:
     {
+        "cv_candidate_name": "string",
         "score": number,
         "detailed_scores": {
             "technical_depth": number,
@@ -72,7 +83,7 @@ export const analyzeResume = async (resumeText: string, linkedinUrl?: string) =>
     `;
 
   try {
-    const completion = await client.chat.completions.create({
+    const completion = await getClient().chat.completions.create({
       model,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.2,
