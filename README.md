@@ -1,6 +1,6 @@
 <div align="center">
 
-![WiseWork Banner](./assets/wisework_banner.png)
+![WiseWork Banner](./assets/wisework_banner.png?v=3)
 
 # 🧠 WiseWork: AI Resume & CV Evaluator
 
