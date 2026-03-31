@@ -12,6 +12,7 @@ import {
 import ResumeAnalysis from './components/ResumeAnalysis'
 import { LandingHeroArt } from './components/LandingHeroArt'
 import { LandingDividerArt } from './components/LandingDividerArt'
+import { LandingWorkflowAnimation } from './components/LandingWorkflowAnimation'
 import { BrandMark, BrandWordmark, PageBackground } from './components/PageChrome'
 
 const App: React.FC = () => {
@@ -22,7 +23,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden text-stone-900 antialiased">
+    <div className="relative min-h-screen overflow-x-clip overflow-y-visible text-stone-900 antialiased">
       <PageBackground />
 
       <a
@@ -39,11 +40,11 @@ const App: React.FC = () => {
             <BrandWordmark subtitle />
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-stone-600 md:flex" aria-label="Primary">
-            <a href="#product" className="transition hover:text-stone-900">
-              Product
-            </a>
             <a href="#workflow" className="transition hover:text-stone-900">
               How it works
+            </a>
+            <a href="#product" className="transition hover:text-stone-900">
+              Product
             </a>
             <a href="#cta" className="transition hover:text-stone-900">
               Get started
@@ -119,6 +120,42 @@ const App: React.FC = () => {
           <LandingDividerArt className="h-12 w-full md:h-14" />
         </div>
 
+        <section id="workflow" className="overflow-visible border-t border-stone-200 bg-[#f0efea]/80">
+          <div className="mx-auto max-w-6xl px-4 pt-16 sm:px-5 md:px-8 md:pt-20 lg:pt-24">
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl lg:text-[2.75rem]">
+                How it works
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-stone-600 md:text-[17px]">
+                Four stages in the pipeline — then three simple actions to run it yourself.
+              </p>
+            </div>
+          </div>
+          <LandingWorkflowAnimation className="mx-auto mt-8 w-full px-2 sm:px-4 md:mt-10 lg:mt-12" />
+          <div className="mx-auto max-w-6xl px-4 pb-20 sm:px-5 md:px-8 md:pb-24 lg:pb-28">
+            <ol className="relative mx-auto mt-10 grid max-w-4xl gap-10 md:mt-14 md:grid-cols-3 md:gap-8">
+              <div
+                className="pointer-events-none absolute left-0 right-0 top-8 hidden h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent md:block"
+                aria-hidden
+              />
+              {[
+                { step: '1', title: 'Add candidates', desc: 'Name each person and attach a CV or LinkedIn URL.', icon: Upload },
+                { step: '2', title: 'Run analysis', desc: 'The server parses content and calls the AI model.', icon: Zap },
+                { step: '3', title: 'Review ranks', desc: 'Results sort by score with breakdowns and notes.', icon: Layers },
+              ].map(({ step, title, desc, icon: Icon }) => (
+                <li key={step} className="relative flex min-h-0 flex-col items-center text-center">
+                  <span className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-stone-200 bg-white text-teal-800 shadow-md ring-4 ring-[#f0efea]">
+                    <Icon className="h-6 w-6" strokeWidth={1.5} />
+                  </span>
+                  <span className="mt-4 font-display text-4xl font-semibold tabular-nums text-stone-200">{step}</span>
+                  <h3 className="mt-1 font-semibold text-stone-900">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-stone-600">{desc}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
         <section id="product" className="border-t border-stone-200/90 bg-white">
           <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -163,37 +200,6 @@ const App: React.FC = () => {
                 </p>
               </li>
             </ul>
-          </div>
-        </section>
-
-        <section id="workflow" className="border-t border-stone-200 bg-[#f0efea]/80">
-          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="font-display text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">How it works</h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-stone-600">
-                Three steps from files to a ranked shortlist.
-              </p>
-            </div>
-            <ol className="relative mx-auto mt-14 grid max-w-4xl gap-8 md:grid-cols-3 md:gap-6">
-              <div
-                className="pointer-events-none absolute left-0 right-0 top-8 hidden h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent md:block"
-                aria-hidden
-              />
-              {[
-                { step: '1', title: 'Add candidates', desc: 'Name each person and attach a CV or LinkedIn URL.', icon: Upload },
-                { step: '2', title: 'Run analysis', desc: 'The server parses content and calls the AI model.', icon: Zap },
-                { step: '3', title: 'Review ranks', desc: 'Results sort by score with breakdowns and notes.', icon: Layers },
-              ].map(({ step, title, desc, icon: Icon }) => (
-                <li key={step} className="relative flex flex-col items-center text-center">
-                  <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200 bg-white text-teal-800 shadow-md ring-4 ring-[#f0efea]">
-                    <Icon className="h-6 w-6" strokeWidth={1.5} />
-                  </span>
-                  <span className="mt-4 font-display text-4xl font-semibold tabular-nums text-stone-200">{step}</span>
-                  <h3 className="mt-1 font-semibold text-stone-900">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-stone-600">{desc}</p>
-                </li>
-              ))}
-            </ol>
           </div>
         </section>
 
@@ -245,13 +251,13 @@ const App: React.FC = () => {
                 <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Navigate</p>
                 <ul className="mt-3 space-y-2 text-stone-600">
                   <li>
-                    <a href="#product" className="hover:text-teal-800">
-                      Product
+                    <a href="#workflow" className="hover:text-teal-800">
+                      How it works
                     </a>
                   </li>
                   <li>
-                    <a href="#workflow" className="hover:text-teal-800">
-                      How it works
+                    <a href="#product" className="hover:text-teal-800">
+                      Product
                     </a>
                   </li>
                 </ul>
