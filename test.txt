@@ -1,0 +1,6 @@
+mv ~/WiseWork ~/WiseWork_backup
+mv ~/tt/WiseWork ~/
+
+
+
+pm2 restart wisework-api --update-env
